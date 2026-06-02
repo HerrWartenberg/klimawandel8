@@ -2312,7 +2312,7 @@ function initRoom3Match() {
     pool.appendChild(el);
   });
 
-  // Drag handlers
+  // ── Mouse drag ──────────────────────────────────────────────────────────
   let dragChip = null;
   document.querySelectorAll('.match-chip').forEach(chip => {
     chip.addEventListener('dragstart', e => {
@@ -2325,21 +2325,67 @@ function initRoom3Match() {
       dragChip = null;
     });
   });
-  // Drop targets (including pool)
   document.querySelectorAll('.match-drop, #r3-pool').forEach(zone => {
-    zone.addEventListener('dragover', e => {
-      e.preventDefault();
-      zone.classList.add('dragover');
-    });
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
     zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
     zone.addEventListener('drop', e => {
       e.preventDefault();
       zone.classList.remove('dragover');
-      if (dragChip) {
-        zone.appendChild(dragChip);
-        checkR3Step1();
-      }
+      if (dragChip) { zone.appendChild(dragChip); checkR3Step1(); }
     });
+  });
+
+  // ── Touch drag (iPad / mobile) ───────────────────────────────────────────
+  let touchChip = null, touchClone = null, touchOffX = 0, touchOffY = 0;
+
+  document.querySelectorAll('.match-chip').forEach(chip => {
+    chip.addEventListener('touchstart', e => {
+      touchChip = chip;
+      const r = chip.getBoundingClientRect();
+      touchOffX = e.touches[0].clientX - r.left;
+      touchOffY = e.touches[0].clientY - r.top;
+      touchClone = chip.cloneNode(true);
+      touchClone.style.cssText = [
+        'position:fixed',
+        `left:${r.left}px`, `top:${r.top}px`,
+        `width:${r.width}px`,
+        'opacity:0.88', 'pointer-events:none', 'z-index:9999',
+        'border-color:var(--ice-glow)',
+        'background:rgba(20,44,71,0.95)',
+        'transition:none'
+      ].join(';');
+      document.body.appendChild(touchClone);
+      chip.style.opacity = '0.25';
+      // Highlight valid drop zones
+      document.querySelectorAll('.match-drop, #r3-pool').forEach(z => z.classList.add('dragover'));
+    }, {passive: true});
+
+    chip.addEventListener('touchmove', e => {
+      if (!touchChip || !touchClone) return;
+      e.preventDefault();
+      const x = e.touches[0].clientX, y = e.touches[0].clientY;
+      touchClone.style.left = (x - touchOffX) + 'px';
+      touchClone.style.top  = (y - touchOffY) + 'px';
+    }, {passive: false});
+
+    const endTouchChip = e => {
+      if (!touchChip || !touchClone) return;
+      // Hide clone so elementFromPoint works
+      touchClone.style.display = 'none';
+      const x = e.changedTouches[0].clientX, y = e.changedTouches[0].clientY;
+      const el = document.elementFromPoint(x, y);
+      touchClone.style.display = '';
+      document.body.removeChild(touchClone); touchClone = null;
+      document.querySelectorAll('.match-drop, #r3-pool').forEach(z => z.classList.remove('dragover'));
+      touchChip.style.opacity = '';
+
+      // Find closest drop zone
+      const target = el && (el.closest('.match-drop') || el.closest('#r3-pool'));
+      if (target) { target.appendChild(touchChip); checkR3Step1(); }
+      touchChip = null;
+    };
+    chip.addEventListener('touchend',    endTouchChip, {passive: true});
+    chip.addEventListener('touchcancel', endTouchChip, {passive: true});
   });
 }
 
