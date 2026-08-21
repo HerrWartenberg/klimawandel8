@@ -1,0 +1,894 @@
+<title>Kniffelblock</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,900&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --felt: #2f6b52;
+    --felt-deep: #234f3c;
+    --paper: #f7f1e3;
+    --paper-line: rgba(36, 31, 22, 0.16);
+    --paper-line-strong: rgba(36, 31, 22, 0.32);
+    --ink: #26231b;
+    --ink-soft: #6b6455;
+    --felt-ink: #eef4ee;
+    --felt-ink-soft: rgba(238, 244, 238, 0.68);
+    --accent: #b5432f;
+    --accent-ink: #fff6f0;
+    --accent-2: #a97521;
+    --accent-2-soft: rgba(169, 117, 33, 0.14);
+    --good: #3f7a52;
+    --good-soft: rgba(63, 122, 82, 0.14);
+    --shadow: rgba(13, 18, 13, 0.35);
+    --focus: #2f6b52;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --felt: #0f2a20;
+      --felt-deep: #081a13;
+      --paper: #2a251c;
+      --paper-line: rgba(237, 230, 214, 0.16);
+      --paper-line-strong: rgba(237, 230, 214, 0.34);
+      --ink: #ece4d3;
+      --ink-soft: #b6ab95;
+      --felt-ink: #d8e6dc;
+      --felt-ink-soft: rgba(216, 230, 220, 0.62);
+      --accent: #e2725f;
+      --accent-ink: #2a1109;
+      --accent-2: #e0b25e;
+      --accent-2-soft: rgba(224, 178, 94, 0.16);
+      --good: #6fbf85;
+      --good-soft: rgba(111, 191, 133, 0.16);
+      --shadow: rgba(0, 0, 0, 0.6);
+      --focus: #e0b25e;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --felt: #0f2a20;
+    --felt-deep: #081a13;
+    --paper: #2a251c;
+    --paper-line: rgba(237, 230, 214, 0.16);
+    --paper-line-strong: rgba(237, 230, 214, 0.34);
+    --ink: #ece4d3;
+    --ink-soft: #b6ab95;
+    --felt-ink: #d8e6dc;
+    --felt-ink-soft: rgba(216, 230, 220, 0.62);
+    --accent: #e2725f;
+    --accent-ink: #2a1109;
+    --accent-2: #e0b25e;
+    --accent-2-soft: rgba(224, 178, 94, 0.16);
+    --good: #6fbf85;
+    --good-soft: rgba(111, 191, 133, 0.16);
+    --shadow: rgba(0, 0, 0, 0.6);
+    --focus: #e0b25e;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 18% 12%, rgba(255,255,255,0.05) 0, transparent 45%),
+      repeating-radial-gradient(circle at 0 0, rgba(255,255,255,0.025) 0, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 22px),
+      linear-gradient(160deg, var(--felt) 0%, var(--felt-deep) 100%);
+    color: var(--felt-ink);
+    font-family: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    padding: clamp(1rem, 3vw, 3rem) clamp(0.75rem, 3vw, 2rem) 4rem;
+    display: flex;
+    justify-content: center;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .sheet {
+    width: 100%;
+    max-width: 980px;
+  }
+
+  header.top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.4rem;
+  }
+
+  .title-block { display: flex; align-items: center; gap: 0.7rem; }
+
+  .die-mark { flex: none; }
+
+  h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-style: italic;
+    font-size: clamp(1.8rem, 3.6vw, 2.5rem);
+    margin: 0;
+    letter-spacing: -0.01em;
+    color: var(--felt-ink);
+  }
+
+  .subtitle {
+    margin: 0.15rem 0 0;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.11em;
+    color: var(--felt-ink-soft);
+    font-weight: 600;
+  }
+
+  .leader-banner {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--felt-ink);
+    background: rgba(0,0,0,0.16);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 999px;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .leader-banner .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 0 3px var(--accent-2-soft);
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.1rem;
+  }
+
+  .field-group { display: flex; align-items: center; gap: 0.6rem; }
+
+  .field-group .caption {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--felt-ink-soft);
+    font-weight: 600;
+  }
+
+  .segmented {
+    display: inline-flex;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .segmented button {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: none;
+    background: transparent;
+    color: var(--felt-ink);
+    padding: 0.4rem 0.85rem;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .segmented button[aria-pressed="true"] {
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  .actions { display: flex; gap: 0.5rem; }
+
+  .btn {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 600;
+    font-size: 0.82rem;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.16);
+    color: var(--felt-ink);
+    padding: 0.5rem 0.9rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
+  }
+
+  .btn:hover { background: rgba(0,0,0,0.28); }
+  .btn:active { transform: translateY(1px); }
+
+  .btn.danger[data-armed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .btn.brass {
+    background: var(--accent-2-soft);
+    border-color: var(--accent-2);
+    color: var(--felt-ink);
+  }
+
+  .paper {
+    background: var(--paper);
+    border-radius: 10px;
+    box-shadow: 0 24px 60px var(--shadow), 0 2px 0 rgba(255,255,255,0.04) inset;
+    padding: clamp(0.75rem, 2.4vw, 1.6rem);
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 6px;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+    color: var(--ink);
+  }
+
+  caption { display: none; }
+
+  thead th {
+    text-align: left;
+    padding: 0.5rem 0.6rem 0.7rem;
+    border-bottom: 2px solid var(--paper-line-strong);
+    vertical-align: bottom;
+  }
+
+  thead th.cat-head {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .name-input {
+    width: 100%;
+    font-family: 'Archivo', sans-serif;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--paper-line-strong);
+    padding: 0.15rem 0.1rem 0.35rem;
+    min-width: 0;
+  }
+
+  .name-input::placeholder { color: var(--ink-soft); font-weight: 500; }
+
+  .section-row td {
+    padding: 0.85rem 0.6rem 0.3rem;
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-style: italic;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--paper-line);
+  }
+
+  tbody tr.data-row td, tfoot tr td {
+    padding: 0.32rem 0.6rem;
+    border-bottom: 1px solid var(--paper-line);
+    vertical-align: middle;
+  }
+
+  td.label-cell, th.label-head {
+    position: sticky;
+    left: 0;
+    background: var(--paper);
+    z-index: 1;
+    padding-right: 0.8rem;
+  }
+
+  .cat-name {
+    font-weight: 600;
+    font-size: 0.88rem;
+    display: block;
+  }
+
+  .cat-hint {
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    display: block;
+    margin-top: 0.05rem;
+  }
+
+  .score-input {
+    width: 100%;
+    font-family: 'IBM Plex Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.95rem;
+    text-align: center;
+    color: var(--ink);
+    background: rgba(0,0,0,0.03);
+    border: 1px solid var(--paper-line);
+    border-radius: 6px;
+    padding: 0.35rem 0.2rem;
+    -moz-appearance: textfield;
+  }
+
+  .score-input::-webkit-outer-spin-button,
+  .score-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .score-input::placeholder { color: var(--ink-soft); opacity: 0.6; }
+
+  tr.derived td { background: var(--accent-2-soft); font-weight: 600; }
+
+  tr.derived .cat-name { font-family: 'Fraunces', serif; font-style: italic; }
+
+  .derived-value {
+    display: block;
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.95rem;
+  }
+
+  .bonus-cell { text-align: center; }
+
+  .bonus-note {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.1rem;
+    color: var(--ink-soft);
+  }
+
+  .bonus-cell.achieved .derived-value { color: var(--good); }
+  .bonus-cell.achieved .bonus-note { color: var(--good); }
+
+  tfoot tr.grand td {
+    border-top: 2px solid var(--paper-line-strong);
+    border-bottom: none;
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+  }
+
+  tfoot .cat-name { font-size: 1rem; }
+
+  .grand-value {
+    display: block;
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 1.25rem;
+  }
+
+  td.grand-cell.leading .grand-value {
+    color: var(--accent);
+  }
+
+  td.grand-cell.leading {
+    position: relative;
+  }
+
+  td.grand-cell.leading::before {
+    content: "";
+    position: absolute;
+    top: 0.4rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 6px solid var(--accent);
+  }
+
+  footer.note {
+    margin-top: 1.1rem;
+    font-size: 0.76rem;
+    color: var(--felt-ink-soft);
+    line-height: 1.5;
+    max-width: 62ch;
+  }
+
+  @media (max-width: 640px) {
+    .cat-hint { display: none; }
+    td.label-cell, th.label-head { min-width: 108px; }
+  }
+
+  @media print {
+    body { background: #fff; color: #000; padding: 0; }
+    .toolbar, .leader-banner, footer.note { display: none; }
+    .paper { box-shadow: none; padding: 0; border-radius: 0; }
+    header.top { margin-bottom: 0.8rem; }
+    h1, .subtitle { color: #000; }
+    table { color: #000; }
+    td.label-cell, th.label-head { background: #fff; }
+    .score-input, .name-input { border-color: #000; color: #000; background: transparent; }
+    tr.derived td { background: #eee; }
+    .paper-line, .paper-line-strong { color: #000; }
+  }
+</style>
+
+<div class="sheet">
+  <header class="top">
+    <div class="title-block">
+      <svg class="die-mark" width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+        <rect x="1.5" y="1.5" width="31" height="31" rx="7" fill="var(--paper)" stroke="var(--felt-ink)" stroke-opacity="0.35"/>
+        <circle cx="10.5" cy="10.5" r="2.3" fill="var(--accent)"/>
+        <circle cx="23.5" cy="10.5" r="2.3" fill="var(--accent)"/>
+        <circle cx="17" cy="17" r="2.3" fill="var(--accent)"/>
+        <circle cx="10.5" cy="23.5" r="2.3" fill="var(--accent)"/>
+        <circle cx="23.5" cy="23.5" r="2.3" fill="var(--accent)"/>
+      </svg>
+      <div>
+        <h1>Kniffelblock</h1>
+        <p class="subtitle">Punktezettel für 2–4 Spieler</p>
+      </div>
+    </div>
+    <div class="leader-banner" id="leaderBanner">
+      <span class="dot" aria-hidden="true"></span>
+      <span id="leaderText">Noch keine Punkte eingetragen</span>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="field-group">
+      <span class="caption">Spieler</span>
+      <div class="segmented" id="countSelect" role="group" aria-label="Anzahl Spieler">
+        <button type="button" data-count="2" aria-pressed="false">2</button>
+        <button type="button" data-count="3" aria-pressed="false">3</button>
+        <button type="button" data-count="4" aria-pressed="false">4</button>
+      </div>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn brass" id="printBtn">Drucken</button>
+      <button type="button" class="btn danger" id="resetBtn">Neues Spiel</button>
+    </div>
+  </div>
+
+  <div class="paper">
+    <div class="table-wrap">
+      <table id="scoreTable" aria-describedby="ruleNote">
+        <caption>Kniffel Punktetabelle</caption>
+        <colgroup id="colGroup"></colgroup>
+        <thead>
+          <tr id="headRow">
+            <th class="label-head" scope="col">Kategorie</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+        <tfoot id="tableFoot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <footer class="note" id="ruleNote">
+    Eingaben werden automatisch summiert. Ab <strong>63 Punkten</strong> im oberen Block gibt es
+    den <strong>Bonus von 35 Punkten</strong> – laut Originalregeln. Leere Felder zählen als
+    „noch nicht gewertet"; zum Streichen eine <strong>0</strong> eintragen. Die Eingaben bleiben
+    in diesem Browser gespeichert, bis „Neues Spiel" gedrückt wird.
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "kniffelblock-state-v1";
+
+  var UPPER = [
+    { key: "ones",   label: "Einser",  hint: "Anzahl Einsen × 1",   max: 5 },
+    { key: "twos",   label: "Zweier",  hint: "Anzahl Zweien × 2",   max: 10 },
+    { key: "threes", label: "Dreier",  hint: "Anzahl Dreien × 3",   max: 15 },
+    { key: "fours",  label: "Vierer",  hint: "Anzahl Vieren × 4",   max: 20 },
+    { key: "fives",  label: "Fünfer",  hint: "Anzahl Fünfen × 5",   max: 25 },
+    { key: "sixes",  label: "Sechser", hint: "Anzahl Sechsen × 6",  max: 30 }
+  ];
+
+  var LOWER = [
+    { key: "threeKind",     label: "Dreierpasch",   hint: "Augensumme aller Würfel", max: 30 },
+    { key: "fourKind",      label: "Viererpasch",   hint: "Augensumme aller Würfel", max: 30 },
+    { key: "fullHouse",     label: "Full House",    hint: "Feste 25 Punkte",         max: 25, fixed: 25 },
+    { key: "smallStraight", label: "Kleine Straße", hint: "Feste 30 Punkte",         max: 30, fixed: 30 },
+    { key: "largeStraight", label: "Große Straße",  hint: "Feste 40 Punkte",         max: 40, fixed: 40 },
+    { key: "kniffel",       label: "Kniffel",       hint: "Feste 50 Punkte",         max: 50, fixed: 50 },
+    { key: "chance",        label: "Chance",        hint: "Augensumme aller Würfel", max: 30 }
+  ];
+
+  var BONUS_THRESHOLD = 63;
+  var BONUS_VALUE = 35;
+  var MAX_PLAYERS = 4;
+
+  function emptyScores() {
+    var s = {};
+    UPPER.concat(LOWER).forEach(function (c) { s[c.key] = null; });
+    return s;
+  }
+
+  function defaultState() {
+    var players = [];
+    for (var i = 0; i < MAX_PLAYERS; i++) {
+      players.push({ name: "", scores: emptyScores() });
+    }
+    return { count: 4, players: players };
+  }
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return defaultState();
+      var parsed = JSON.parse(raw);
+      var base = defaultState();
+      if (parsed && Array.isArray(parsed.players)) {
+        for (var i = 0; i < MAX_PLAYERS; i++) {
+          if (parsed.players[i]) {
+            base.players[i].name = typeof parsed.players[i].name === "string" ? parsed.players[i].name : "";
+            var sc = parsed.players[i].scores || {};
+            UPPER.concat(LOWER).forEach(function (c) {
+              var v = sc[c.key];
+              base.players[i].scores[c.key] = (typeof v === "number" && !isNaN(v)) ? v : null;
+            });
+          }
+        }
+      }
+      if ([2, 3, 4].indexOf(parsed.count) !== -1) base.count = parsed.count;
+      return base;
+    } catch (e) {
+      return defaultState();
+    }
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) { /* storage unavailable — proceed without persistence */ }
+  }
+
+  var state = loadState();
+
+  function clamp(n, min, max) {
+    return Math.max(min, Math.min(max, n));
+  }
+
+  function calc(scores) {
+    var sumUpper = 0, sumLower = 0;
+    UPPER.forEach(function (c) {
+      var v = scores[c.key];
+      if (typeof v === "number") sumUpper += v;
+    });
+    LOWER.forEach(function (c) {
+      var v = scores[c.key];
+      if (typeof v === "number") sumLower += v;
+    });
+    var bonus = sumUpper >= BONUS_THRESHOLD ? BONUS_VALUE : 0;
+    var totalUpper = sumUpper + bonus;
+    var grand = totalUpper + sumLower;
+    return { sumUpper: sumUpper, bonus: bonus, totalUpper: totalUpper, sumLower: sumLower, grand: grand };
+  }
+
+  // DOM refs, rebuilt on player-count change
+  var refs = { name: [], input: {}, sumUpper: [], bonusCell: [], bonusValue: [], bonusNote: [], totalUpper: [], sumLower: [], grandCell: [], grandValue: [] };
+
+  var el = {
+    colGroup: document.getElementById("colGroup"),
+    headRow: document.getElementById("headRow"),
+    body: document.getElementById("tableBody"),
+    foot: document.getElementById("tableFoot"),
+    countBtns: document.querySelectorAll("#countSelect button"),
+    resetBtn: document.getElementById("resetBtn"),
+    printBtn: document.getElementById("printBtn"),
+    leaderText: document.getElementById("leaderText")
+  };
+
+  function makeCategoryRow(cat, section) {
+    var tr = document.createElement("tr");
+    tr.className = "data-row";
+    var labelTd = document.createElement("td");
+    labelTd.className = "label-cell";
+    var nameSpan = document.createElement("span");
+    nameSpan.className = "cat-name";
+    nameSpan.textContent = cat.label;
+    var hintSpan = document.createElement("span");
+    hintSpan.className = "cat-hint";
+    hintSpan.textContent = cat.hint;
+    labelTd.appendChild(nameSpan);
+    labelTd.appendChild(hintSpan);
+    tr.appendChild(labelTd);
+
+    for (var i = 0; i < state.count; i++) {
+      var td = document.createElement("td");
+      var input = document.createElement("input");
+      input.type = "number";
+      input.className = "score-input";
+      input.min = "0";
+      input.max = String(cat.max);
+      input.inputMode = "numeric";
+      input.placeholder = cat.fixed ? String(cat.fixed) : "–";
+      var displayVal = state.players[i].scores[cat.key];
+      input.value = typeof displayVal === "number" ? String(displayVal) : "";
+      input.setAttribute("aria-label", cat.label + " – " + playerLabel(i));
+      (function (playerIdx, key, max) {
+        input.addEventListener("input", function () {
+          var raw = input.value;
+          if (raw === "") {
+            state.players[playerIdx].scores[key] = null;
+          } else {
+            var n = parseInt(raw, 10);
+            if (isNaN(n)) n = 0;
+            state.players[playerIdx].scores[key] = Math.max(0, n);
+          }
+          updatePlayer(playerIdx);
+          saveState();
+        });
+        input.addEventListener("blur", function () {
+          var v = state.players[playerIdx].scores[key];
+          if (typeof v === "number") {
+            var clamped = clamp(v, 0, max);
+            state.players[playerIdx].scores[key] = clamped;
+            input.value = String(clamped);
+            updatePlayer(playerIdx);
+            saveState();
+          }
+        });
+      })(i, cat.key, cat.max);
+      td.appendChild(input);
+      tr.appendChild(td);
+      if (!refs.input[cat.key]) refs.input[cat.key] = [];
+      refs.input[cat.key][i] = input;
+    }
+    return tr;
+  }
+
+  function makeSectionHeader(text) {
+    var tr = document.createElement("tr");
+    tr.className = "section-row";
+    var td = document.createElement("td");
+    td.textContent = text;
+    td.colSpan = 1 + state.count;
+    tr.appendChild(td);
+    return tr;
+  }
+
+  function makeDerivedRow(label, kind) {
+    var tr = document.createElement("tr");
+    tr.className = "derived";
+    var labelTd = document.createElement("td");
+    labelTd.className = "label-cell";
+    var nameSpan = document.createElement("span");
+    nameSpan.className = "cat-name";
+    nameSpan.textContent = label;
+    labelTd.appendChild(nameSpan);
+    tr.appendChild(labelTd);
+
+    for (var i = 0; i < state.count; i++) {
+      var td = document.createElement("td");
+      if (kind === "bonus") {
+        td.className = "bonus-cell";
+        var val = document.createElement("span");
+        val.className = "derived-value";
+        var note = document.createElement("span");
+        note.className = "bonus-note";
+        td.appendChild(val);
+        td.appendChild(note);
+        refs.bonusCell[i] = td;
+        refs.bonusValue[i] = val;
+        refs.bonusNote[i] = note;
+      } else {
+        var span = document.createElement("span");
+        span.className = "derived-value";
+        td.appendChild(span);
+        if (kind === "sumUpper") refs.sumUpper[i] = span;
+        if (kind === "totalUpper") refs.totalUpper[i] = span;
+        if (kind === "sumLower") refs.sumLower[i] = span;
+      }
+      tr.appendChild(td);
+    }
+    return tr;
+  }
+
+  function playerLabel(i) {
+    var n = state.players[i].name.trim();
+    return n !== "" ? n : ("Spieler " + (i + 1));
+  }
+
+  function buildTable() {
+    // colgroup
+    el.colGroup.innerHTML = "";
+    var labelCol = document.createElement("col");
+    labelCol.style.width = "190px";
+    el.colGroup.appendChild(labelCol);
+    var pct = (100) / state.count;
+    for (var c = 0; c < state.count; c++) {
+      var col = document.createElement("col");
+      col.style.width = "calc((100% - 190px) / " + state.count + ")";
+      el.colGroup.appendChild(col);
+    }
+
+    // header row
+    el.headRow.innerHTML = "";
+    var labelTh = document.createElement("th");
+    labelTh.className = "label-head";
+    labelTh.scope = "col";
+    labelTh.textContent = "Kategorie";
+    el.headRow.appendChild(labelTh);
+    refs.name = [];
+    for (var i = 0; i < state.count; i++) {
+      var th = document.createElement("th");
+      th.className = "cat-head";
+      var nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.className = "name-input";
+      nameInput.placeholder = "Spieler " + (i + 1);
+      nameInput.value = state.players[i].name;
+      nameInput.maxLength = 18;
+      nameInput.setAttribute("aria-label", "Name Spieler " + (i + 1));
+      (function (idx) {
+        nameInput.addEventListener("input", function () {
+          state.players[idx].name = nameInput.value;
+          saveState();
+          updateLeader();
+        });
+      })(i);
+      th.appendChild(nameInput);
+      el.headRow.appendChild(th);
+      refs.name[i] = nameInput;
+    }
+
+    // body
+    el.body.innerHTML = "";
+    refs.input = {};
+    refs.sumUpper = [];
+    refs.bonusCell = [];
+    refs.bonusValue = [];
+    refs.bonusNote = [];
+    refs.totalUpper = [];
+    refs.sumLower = [];
+
+    el.body.appendChild(makeSectionHeader("Oben — Zahlen"));
+    UPPER.forEach(function (cat) { el.body.appendChild(makeCategoryRow(cat, "upper")); });
+    el.body.appendChild(makeDerivedRow("Summe oben", "sumUpper"));
+    el.body.appendChild(makeDerivedRow("Bonus (ab 63)", "bonus"));
+    el.body.appendChild(makeDerivedRow("Gesamt oben", "totalUpper"));
+
+    el.body.appendChild(makeSectionHeader("Unten — Kombinationen"));
+    LOWER.forEach(function (cat) { el.body.appendChild(makeCategoryRow(cat, "lower")); });
+    el.body.appendChild(makeDerivedRow("Summe unten", "sumLower"));
+
+    // footer / grand total
+    el.foot.innerHTML = "";
+    var tr = document.createElement("tr");
+    tr.className = "grand";
+    var labelTd = document.createElement("td");
+    labelTd.className = "label-cell";
+    var nameSpan = document.createElement("span");
+    nameSpan.className = "cat-name";
+    nameSpan.textContent = "GESAMT";
+    labelTd.appendChild(nameSpan);
+    tr.appendChild(labelTd);
+    refs.grandCell = [];
+    refs.grandValue = [];
+    for (var g = 0; g < state.count; g++) {
+      var td = document.createElement("td");
+      td.className = "grand-cell";
+      var val = document.createElement("span");
+      val.className = "grand-value";
+      td.appendChild(val);
+      tr.appendChild(td);
+      refs.grandCell[g] = td;
+      refs.grandValue[g] = val;
+    }
+    el.foot.appendChild(tr);
+
+    for (var p = 0; p < state.count; p++) updatePlayer(p, true);
+    updateLeader();
+  }
+
+  function updatePlayer(i) {
+    var result = calc(state.players[i].scores);
+    refs.sumUpper[i].textContent = String(result.sumUpper);
+    refs.bonusValue[i].textContent = String(result.bonus);
+    refs.totalUpper[i].textContent = String(result.totalUpper);
+    refs.sumLower[i].textContent = String(result.sumLower);
+    refs.grandValue[i].textContent = String(result.grand);
+
+    if (result.bonus > 0) {
+      refs.bonusCell[i].classList.add("achieved");
+      refs.bonusNote[i].textContent = "Bonus ✓";
+    } else {
+      refs.bonusCell[i].classList.remove("achieved");
+      var missing = BONUS_THRESHOLD - result.sumUpper;
+      refs.bonusNote[i].textContent = result.sumUpper > 0 ? ("noch " + missing) : "ab 63";
+    }
+    updateLeader();
+  }
+
+  function updateLeader() {
+    var best = -1, bestVal = -1, anyPoints = false, tie = false;
+    var totals = [];
+    for (var i = 0; i < state.count; i++) {
+      var r = calc(state.players[i].scores);
+      totals.push(r.grand);
+      if (r.grand > 0) anyPoints = true;
+      refs.grandCell[i].classList.remove("leading");
+    }
+    if (anyPoints) {
+      bestVal = Math.max.apply(null, totals);
+      var leaders = [];
+      for (var j = 0; j < state.count; j++) {
+        if (totals[j] === bestVal && bestVal > 0) {
+          refs.grandCell[j].classList.add("leading");
+          leaders.push(playerLabel(j));
+        }
+      }
+      if (leaders.length > 1) {
+        el.leaderText.textContent = "Gleichstand: " + leaders.join(" & ") + " · " + bestVal + " Punkte";
+      } else {
+        el.leaderText.textContent = "In Führung: " + leaders[0] + " · " + bestVal + " Punkte";
+      }
+    } else {
+      el.leaderText.textContent = "Noch keine Punkte eingetragen";
+    }
+  }
+
+  function setCount(n) {
+    state.count = n;
+    Array.prototype.forEach.call(el.countBtns, function (b) {
+      b.setAttribute("aria-pressed", String(parseInt(b.dataset.count, 10) === n));
+    });
+    saveState();
+    buildTable();
+  }
+
+  Array.prototype.forEach.call(el.countBtns, function (btn) {
+    btn.addEventListener("click", function () {
+      setCount(parseInt(btn.dataset.count, 10));
+    });
+  });
+
+  el.printBtn.addEventListener("click", function () { window.print(); });
+
+  var resetArmed = false, resetTimer = null;
+  el.resetBtn.addEventListener("click", function () {
+    if (!resetArmed) {
+      resetArmed = true;
+      el.resetBtn.textContent = "Wirklich? Klicken zum Leeren";
+      el.resetBtn.dataset.armed = "true";
+      resetTimer = setTimeout(function () {
+        resetArmed = false;
+        el.resetBtn.textContent = "Neues Spiel";
+        el.resetBtn.dataset.armed = "false";
+      }, 4000);
+    } else {
+      clearTimeout(resetTimer);
+      resetArmed = false;
+      el.resetBtn.textContent = "Neues Spiel";
+      el.resetBtn.dataset.armed = "false";
+      for (var i = 0; i < MAX_PLAYERS; i++) {
+        state.players[i].scores = emptyScores();
+      }
+      saveState();
+      buildTable();
+    }
+  });
+
+  // init
+  Array.prototype.forEach.call(el.countBtns, function (b) {
+    b.setAttribute("aria-pressed", String(parseInt(b.dataset.count, 10) === state.count));
+  });
+  buildTable();
+})();
+</script>
