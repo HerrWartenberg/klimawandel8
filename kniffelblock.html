@@ -621,9 +621,9 @@
       var displayVal = state.players[i].scores[cat.key];
       input.value = typeof displayVal === "number" ? String(displayVal) : "";
       input.setAttribute("aria-label", cat.label + " – " + playerLabel(i));
-      (function (playerIdx, key, max) {
-        input.addEventListener("input", function () {
-          var raw = input.value;
+      (function (playerIdx, key, max, inputEl) {
+        inputEl.addEventListener("input", function () {
+          var raw = inputEl.value;
           if (raw === "") {
             state.players[playerIdx].scores[key] = null;
           } else {
@@ -634,17 +634,17 @@
           updatePlayer(playerIdx);
           saveState();
         });
-        input.addEventListener("blur", function () {
+        inputEl.addEventListener("blur", function () {
           var v = state.players[playerIdx].scores[key];
           if (typeof v === "number") {
             var clamped = clamp(v, 0, max);
             state.players[playerIdx].scores[key] = clamped;
-            input.value = String(clamped);
+            inputEl.value = String(clamped);
             updatePlayer(playerIdx);
             saveState();
           }
         });
-      })(i, cat.key, cat.max);
+      })(i, cat.key, cat.max, input);
       td.appendChild(input);
       tr.appendChild(td);
       if (!refs.input[cat.key]) refs.input[cat.key] = [];
@@ -736,13 +736,13 @@
       nameInput.value = state.players[i].name;
       nameInput.maxLength = 18;
       nameInput.setAttribute("aria-label", "Name Spieler " + (i + 1));
-      (function (idx) {
-        nameInput.addEventListener("input", function () {
-          state.players[idx].name = nameInput.value;
+      (function (idx, inputEl) {
+        inputEl.addEventListener("input", function () {
+          state.players[idx].name = inputEl.value;
           saveState();
           updateLeader();
         });
-      })(i);
+      })(i, nameInput);
       th.appendChild(nameInput);
       el.headRow.appendChild(th);
       refs.name[i] = nameInput;
