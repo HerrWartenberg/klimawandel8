@@ -22,6 +22,7 @@
     --good-soft: rgba(63, 122, 82, 0.14);
     --shadow: rgba(13, 18, 13, 0.35);
     --focus: #2f6b52;
+    --label-w: 190px;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -244,9 +245,50 @@
 
   thead th {
     text-align: left;
-    padding: 0.5rem 0.6rem 0.7rem;
-    border-bottom: 2px solid var(--paper-line-strong);
+    padding: 0.5rem 0.6rem 0.25rem;
     vertical-align: bottom;
+  }
+
+  thead tr.odds-row td {
+    padding: 0.2rem 0.6rem 0.7rem;
+    border-bottom: 2px solid var(--paper-line-strong);
+    vertical-align: top;
+  }
+
+  thead tr.odds-row .cat-name { font-size: 0.8rem; }
+
+  .odds-val {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--ink);
+  }
+
+  .odds-track {
+    display: block;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--paper-line);
+    overflow: hidden;
+  }
+
+  .odds-fill {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 3px;
+    background: var(--accent-2);
+    transition: width 0.35s ease, background-color 0.2s ease;
+  }
+
+  td.odds-cell.top .odds-val { color: var(--accent); }
+  td.odds-cell.top .odds-fill { background: var(--accent); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .odds-fill, .segmented button, .btn { transition: none; }
   }
 
   thead th.cat-head {
@@ -405,8 +447,8 @@
   }
 
   @media (max-width: 640px) {
+    :root { --label-w: 112px; }
     .cat-hint { display: none; }
-    td.label-cell, th.label-head { min-width: 108px; }
   }
 
   @media print {
@@ -418,6 +460,7 @@
     table { color: #000; }
     td.label-cell, th.label-head { background: #fff; }
     .score-input, .name-input { border-color: #000; color: #000; background: transparent; }
+    tr.odds-row { display: none; }
     tr.derived td { background: #eee; }
     .paper-line, .paper-line-strong { color: #000; }
   }
@@ -469,6 +512,7 @@
           <tr id="headRow">
             <th class="label-head" scope="col">Kategorie</th>
           </tr>
+          <tr id="oddsRow" class="odds-row"></tr>
         </thead>
         <tbody id="tableBody"></tbody>
         <tfoot id="tableFoot"></tfoot>
@@ -479,8 +523,11 @@
   <footer class="note" id="ruleNote">
     Eingaben werden automatisch summiert. Ab <strong>63 Punkten</strong> im oberen Block gibt es
     den <strong>Bonus von 35 Punkten</strong> – laut Originalregeln. Leere Felder zählen als
-    „noch nicht gewertet"; zum Streichen eine <strong>0</strong> eintragen. Die Eingaben bleiben
-    in diesem Browser gespeichert, bis „Neues Spiel" gedrückt wird.
+    „noch nicht gewertet"; zum Streichen eine <strong>0</strong> eintragen. Die
+    <strong>Gewinnchance</strong> ist eine Schätzung: Sie rechnet für alle noch offenen Felder mit
+    durchschnittlichen Erwartungswerten (inklusive Chance auf den Bonus) und vergleicht die
+    möglichen Endstände der Spieler. Die Eingaben bleiben in diesem Browser gespeichert, bis
+    „Neues Spiel" gedrückt wird.
   </footer>
 </div>
 
@@ -586,6 +633,8 @@
   var el = {
     colGroup: document.getElementById("colGroup"),
     headRow: document.getElementById("headRow"),
+    oddsRow: document.getElementById("oddsRow"),
+    table: document.getElementById("scoreTable"),
     body: document.getElementById("tableBody"),
     foot: document.getElementById("tableFoot"),
     countBtns: document.querySelectorAll("#countSelect button"),
@@ -709,12 +758,12 @@
     // colgroup
     el.colGroup.innerHTML = "";
     var labelCol = document.createElement("col");
-    labelCol.style.width = "190px";
+    labelCol.style.width = "var(--label-w)";
     el.colGroup.appendChild(labelCol);
     var pct = (100) / state.count;
     for (var c = 0; c < state.count; c++) {
       var col = document.createElement("col");
-      col.style.width = "calc((100% - 190px) / " + state.count + ")";
+      col.style.width = "calc((100% - var(--label-w)) / " + state.count + ")";
       el.colGroup.appendChild(col);
     }
 
@@ -747,6 +796,38 @@
       el.headRow.appendChild(th);
       refs.name[i] = nameInput;
     }
+
+    // winning-chance row, directly below the names
+    el.oddsRow.innerHTML = "";
+    var oddsLabel = document.createElement("td");
+    oddsLabel.className = "label-cell";
+    oddsLabel.title = "Geschätzt aus den bisherigen Punkten und den Erwartungswerten der offenen Felder";
+    var oddsName = document.createElement("span");
+    oddsName.className = "cat-name";
+    oddsName.textContent = "Gewinnchance";
+    oddsLabel.appendChild(oddsName);
+    el.oddsRow.appendChild(oddsLabel);
+    refs.oddsCell = [];
+    refs.oddsVal = [];
+    refs.oddsFill = [];
+    for (var o = 0; o < state.count; o++) {
+      var oddsTd = document.createElement("td");
+      oddsTd.className = "odds-cell";
+      var oddsVal = document.createElement("span");
+      oddsVal.className = "odds-val";
+      var oddsTrack = document.createElement("span");
+      oddsTrack.className = "odds-track";
+      var oddsFill = document.createElement("span");
+      oddsFill.className = "odds-fill";
+      oddsTrack.appendChild(oddsFill);
+      oddsTd.appendChild(oddsVal);
+      oddsTd.appendChild(oddsTrack);
+      el.oddsRow.appendChild(oddsTd);
+      refs.oddsCell[o] = oddsTd;
+      refs.oddsVal[o] = oddsVal;
+      refs.oddsFill[o] = oddsFill;
+    }
+    el.table.style.minWidth = "calc(var(--label-w) + " + (state.count * 96) + "px)";
 
     // body
     el.body.innerHTML = "";
@@ -841,6 +922,131 @@
       }
     } else {
       el.leaderText.textContent = "Noch keine Punkte eingetragen";
+    }
+    updateOdds();
+  }
+
+  // ---- Gewinnchance -------------------------------------------------------
+  // Erwartungswert und Streuung (Mittelwert, Standardabweichung) je Feld bei
+  // vernünftigem Spiel, ausgehend von einem komplett leeren Feld.
+  var EXPECTED = {
+    ones:          [2.11, 1.1],
+    twos:          [5.28, 2.3],
+    threes:        [8.57, 3.4],
+    fours:         [12.16, 4.5],
+    fives:         [15.69, 5.5],
+    sixes:         [19.19, 6.7],
+    threeKind:     [21.66, 9.0],
+    fourKind:      [13.10, 12.5],
+    fullHouse:     [22.59, 7.4],
+    smallStraight: [29.46, 4.0],
+    largeStraight: [32.71, 15.4],
+    kniffel:       [16.87, 23.6],
+    chance:        [22.01, 3.5]
+  };
+  // Wer den Bonus anpeilt, erreicht ihn häufiger als der reine Durchschnitt
+  // vermuten lässt – grobe Korrektur, die mit jedem gefüllten Feld abnimmt.
+  var BONUS_AIM_BOOST = 4;
+
+  // Standardnormalverteilung (Verteilungsfunktion, Näherung nach Abramowitz/Stegun)
+  function normCdf(x) {
+    var t = 1 / (1 + 0.2316419 * Math.abs(x));
+    var d = 0.3989423 * Math.exp(-x * x / 2);
+    var p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+    return x > 0 ? 1 - p : p;
+  }
+
+  // Erwarteter Endstand eines Spielers: Mittelwert und Varianz
+  function project(scores) {
+    var cur = 0, remMean = 0, remVar = 0;
+    var upperCur = 0, upperRemMean = 0, upperRemVar = 0;
+    UPPER.forEach(function (c) {
+      var v = scores[c.key];
+      if (typeof v === "number") {
+        cur += v; upperCur += v;
+      } else {
+        var e = EXPECTED[c.key];
+        remMean += e[0]; remVar += e[1] * e[1];
+        upperRemMean += e[0]; upperRemVar += e[1] * e[1];
+      }
+    });
+    LOWER.forEach(function (c) {
+      var v = scores[c.key];
+      if (typeof v === "number") {
+        cur += v;
+      } else {
+        var e = EXPECTED[c.key];
+        remMean += e[0]; remVar += e[1] * e[1];
+      }
+    });
+    var pBonus;
+    if (upperCur >= BONUS_THRESHOLD) {
+      pBonus = 1;
+    } else if (upperRemVar === 0) {
+      pBonus = 0;
+    } else {
+      var boost = BONUS_AIM_BOOST * upperRemMean / BONUS_THRESHOLD;
+      var z = (BONUS_THRESHOLD - 0.5 - upperCur - upperRemMean - boost) / Math.sqrt(upperRemVar);
+      pBonus = 1 - normCdf(z);
+    }
+    return {
+      mean: cur + remMean + BONUS_VALUE * pBonus,
+      variance: remVar + BONUS_VALUE * BONUS_VALUE * pBonus * (1 - pBonus)
+    };
+  }
+
+  // Wahrscheinlichkeit, dass Spieler i den höchsten Endstand erreicht.
+  // Endstände gelten als normalverteilt; die Integration ist exakt symmetrisch,
+  // damit gleich gute Spieler auch exakt gleiche Chancen zeigen.
+  function winProbabilities(projs) {
+    var n = projs.length;
+    var allDone = projs.every(function (p) { return p.variance === 0; });
+    var probs = [], i;
+    if (allDone) {
+      var top = Math.max.apply(null, projs.map(function (p) { return p.mean; }));
+      var winners = projs.filter(function (p) { return p.mean === top; }).length;
+      return projs.map(function (p) { return p.mean === top ? 1 / winners : 0; });
+    }
+    var sds = projs.map(function (p) { return Math.max(Math.sqrt(p.variance), 0.3); });
+    var lo = Infinity, hi = -Infinity;
+    for (i = 0; i < n; i++) {
+      lo = Math.min(lo, projs[i].mean - 6 * sds[i]);
+      hi = Math.max(hi, projs[i].mean + 6 * sds[i]);
+      probs.push(0);
+    }
+    var STEPS = 800, dx = (hi - lo) / STEPS;
+    var prev = [];
+    for (i = 0; i < n; i++) prev.push(normCdf((lo - projs[i].mean) / sds[i]));
+    for (var k = 0; k < STEPS; k++) {
+      var xMid = lo + (k + 0.5) * dx, xEnd = lo + (k + 1) * dx;
+      var mid = [], next = [];
+      for (i = 0; i < n; i++) {
+        mid.push(normCdf((xMid - projs[i].mean) / sds[i]));
+        next.push(normCdf((xEnd - projs[i].mean) / sds[i]));
+      }
+      for (i = 0; i < n; i++) {
+        var others = 1;
+        for (var j = 0; j < n; j++) if (j !== i) others *= mid[j];
+        probs[i] += others * (next[i] - prev[i]);
+      }
+      prev = next;
+    }
+    var sum = probs.reduce(function (a, b) { return a + b; }, 0);
+    return probs.map(function (p) { return sum > 0 ? p / sum : 1 / n; });
+  }
+
+  function updateOdds() {
+    if (!refs.oddsCell || refs.oddsCell.length !== state.count) return;
+    var projs = [];
+    for (var i = 0; i < state.count; i++) projs.push(project(state.players[i].scores));
+    var probs = winProbabilities(projs);
+    var max = Math.max.apply(null, probs), min = Math.min.apply(null, probs);
+    for (var j = 0; j < state.count; j++) {
+      var pct = Math.round(probs[j] * 100);
+      refs.oddsVal[j].textContent = pct + " %";
+      refs.oddsFill[j].style.width = (probs[j] * 100).toFixed(1) + "%";
+      refs.oddsCell[j].title = "Geschätzte Gewinnchance von " + playerLabel(j) + ": " + pct + " %";
+      refs.oddsCell[j].classList.toggle("top", probs[j] === max && max - min > 0.005);
     }
   }
 
