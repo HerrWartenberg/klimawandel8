@@ -284,11 +284,59 @@
     transition: width 0.35s ease, background-color 0.2s ease;
   }
 
+  table.hide-odds tr.odds-row { display: none; }
+  table.hide-odds thead th { padding-bottom: 0.7rem; border-bottom: 2px solid var(--paper-line-strong); }
+
+  .switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--felt-ink);
+    position: relative;
+  }
+
+  .switch input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+  }
+
+  .switch-track {
+    position: relative;
+    flex: none;
+    width: 34px;
+    height: 20px;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.22);
+    transition: background-color 0.2s ease;
+  }
+
+  .switch-track::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--felt-ink);
+    transition: transform 0.2s ease;
+  }
+
+  .switch input:checked + .switch-track { background: var(--accent-2); border-color: var(--accent-2); }
+  .switch input:checked + .switch-track::after { transform: translateX(14px); background: var(--paper); }
+  .switch input:focus-visible + .switch-track { outline: 3px solid var(--focus); outline-offset: 2px; }
+
   td.odds-cell.top .odds-val { color: var(--accent); }
   td.odds-cell.top .odds-fill { background: var(--accent); }
 
   @media (prefers-reduced-motion: reduce) {
-    .odds-fill, .segmented button, .btn { transition: none; }
+    .odds-fill, .segmented button, .btn, .switch-track, .switch-track::after { transition: none; }
   }
 
   thead th.cat-head {
@@ -497,6 +545,11 @@
         <button type="button" data-count="4" aria-pressed="false">4</button>
       </div>
     </div>
+    <label class="switch">
+      <input type="checkbox" id="oddsToggle" checked>
+      <span class="switch-track" aria-hidden="true"></span>
+      <span class="switch-label">Gewinnchance anzeigen</span>
+    </label>
     <div class="actions">
       <button type="button" class="btn brass" id="printBtn">Drucken</button>
       <button type="button" class="btn danger" id="resetBtn">Neues Spiel</button>
@@ -571,7 +624,7 @@
     for (var i = 0; i < MAX_PLAYERS; i++) {
       players.push({ name: "", scores: emptyScores() });
     }
-    return { count: 4, players: players };
+    return { count: 4, showOdds: true, players: players };
   }
 
   function loadState() {
@@ -593,6 +646,7 @@
         }
       }
       if ([2, 3, 4].indexOf(parsed.count) !== -1) base.count = parsed.count;
+      if (typeof parsed.showOdds === "boolean") base.showOdds = parsed.showOdds;
       return base;
     } catch (e) {
       return defaultState();
@@ -635,6 +689,7 @@
     headRow: document.getElementById("headRow"),
     oddsRow: document.getElementById("oddsRow"),
     table: document.getElementById("scoreTable"),
+    oddsToggle: document.getElementById("oddsToggle"),
     body: document.getElementById("tableBody"),
     foot: document.getElementById("tableFoot"),
     countBtns: document.querySelectorAll("#countSelect button"),
@@ -1035,7 +1090,13 @@
     return probs.map(function (p) { return sum > 0 ? p / sum : 1 / n; });
   }
 
+  function applyOddsVisibility() {
+    el.table.classList.toggle("hide-odds", !state.showOdds);
+    el.oddsToggle.checked = state.showOdds;
+  }
+
   function updateOdds() {
+    if (!state.showOdds) return;
     if (!refs.oddsCell || refs.oddsCell.length !== state.count) return;
     var projs = [];
     for (var i = 0; i < state.count; i++) projs.push(project(state.players[i].scores));
@@ -1067,6 +1128,13 @@
 
   el.printBtn.addEventListener("click", function () { window.print(); });
 
+  el.oddsToggle.addEventListener("change", function () {
+    state.showOdds = el.oddsToggle.checked;
+    applyOddsVisibility();
+    saveState();
+    updateOdds();
+  });
+
   var resetArmed = false, resetTimer = null;
   el.resetBtn.addEventListener("click", function () {
     if (!resetArmed) {
@@ -1092,6 +1160,7 @@
   });
 
   // init
+  applyOddsVisibility();
   Array.prototype.forEach.call(el.countBtns, function (b) {
     b.setAttribute("aria-pressed", String(parseInt(b.dataset.count, 10) === state.count));
   });
